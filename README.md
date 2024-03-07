@@ -35,3 +35,8 @@ Projeto básico para cadastro de fiados seguindo as aulas do Edson Maia [Curso d
   - Factory de objetos PSR-7
 - psr/http-server-handler
   - Interface Handler PSR-15
+
+## Criar tabelas SQLite
+```
+php cli-config.php orm:schema-tool:create
+```
