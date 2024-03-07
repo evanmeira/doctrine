@@ -10,6 +10,7 @@ trait ControllerTrait
     }
 
     private function paginaNaoEncontrada(): void {
-        require_once __DIR__.'/../view/pagina_nao_encontrada.php';
+        http_response_code(404);
+        exit;
     }
 }

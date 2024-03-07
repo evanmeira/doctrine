@@ -2,35 +2,31 @@
 
 namespace Kuri\Doctrine\controller;
 
-use Kuri\Doctrine\persistencia\entity\Usuario;
 use Kuri\Doctrine\persistencia\repository\UsuarioRepository;
-use Kuri\Doctrine\utils\ControllerTrait;
+use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
-class LoginController
+class LoginController extends Controller
 {
-    use ControllerTrait;
-
     private const ROUTES = [
         '' => 'login',
         'logar' => 'logar',
         'logoff' => 'logoff'
     ];
 
-    public function __construct($path)
+    public function __construct(string $path)
     {
-        if(key_exists($path, self::ROUTES)) {
-            $this->{self::ROUTES[$path]}();
-        } else {
-            $this->paginaNaoEncontrada();
-        }
+        parent::__construct($path);
+        $this->routes = self::ROUTES;
     }
 
-    private function login(): void
+    protected function login(): ResponseInterface
     {
-        require_once __DIR__.'/../view/login/formulario.php';
+        $html = $this->gerarHTML('login/formulario.php');
+        return new Response(200, [], $html);
     }
 
-    private function logar(): void
+    protected function logar(): ResponseInterface
     {
         $user = filter_input(INPUT_POST, 'user', FILTER_VALIDATE_EMAIL);
 
@@ -46,12 +42,12 @@ class LoginController
             $_SESSION['mensagem'] = 'Usuário não encontrado.';
         }
 
-        $this->go('/');
+        return new Response(302, ['Location' => '/']);
     }
 
-    private function logoff(): void
+    protected function logoff(): ResponseInterface
     {
         session_destroy();
-        $this->go('/');
+        return new Response(302, ['Location' => '/']);
     }
 }

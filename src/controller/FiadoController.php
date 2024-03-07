@@ -4,13 +4,11 @@ namespace Kuri\Doctrine\controller;
 
 use Kuri\Doctrine\persistencia\entity\Fiado;
 use Kuri\Doctrine\persistencia\repository\FiadoRepository;
-use Kuri\Doctrine\utils\ControllerTrait;
+use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
-class FiadoController
+class FiadoController extends Controller
 {
-
-    use ControllerTrait;
-
     private const ROUTES = [
         '' => 'home',
         'listar' => 'listarFiados',
@@ -21,45 +19,45 @@ class FiadoController
         'excluir' => 'excluirFiado',
     ];
 
-    public function __construct(?string $path = '')
+    public function __construct(string $path)
     {
-        // @ utilizado para suprimir erros, aqui no caso
-        // um possivel Warning: Undefined array key "PATH_INFO" 
-        // @ retorna NULL no caso de erro
-        //$path = @$_SERVER['PATH_INFO'];
-        
-        if(array_key_exists($path, self::ROUTES)) {
-            $this->{self::ROUTES[$path]}();
-        } else {
-            $this->paginaNaoEncontrada();
-        }        
+        parent::__construct($path);
+        $this->routes = self::ROUTES;
+    }
+    
+    protected function home(): ResponseInterface {
+        $html = $this->gerarHTML('home.php');
+        return new Response(200, [], $html);
     }
 
-    private function home(): void {
-        require_once __DIR__.'/../view/home.php';
+    protected function listarFiados(): ResponseInterface {
+        $dados['fiadoList'] = FiadoRepository::getFiados();
+        $html = $this->gerarHTML('fiado/lista.php', $dados);
+        return new Response(200, [], $html);
     }
 
-    private function listarFiados(): void {
-        $fiadoList = FiadoRepository::getFiados();
-        require_once __DIR__.'/../view/fiado/lista.php';
+    protected function novoFiado(): ResponseInterface {
+        $html = $this->gerarHTML('fiado/formulario.php');
+        return new Response(200, [], $html);
     }
 
-    private function novoFiado(): void {
-        require_once __DIR__.'/../view/fiado/formulario.php';
-    }
-
-    private function editarFiado(): void {
+    protected function editarFiado(): ResponseInterface {
         $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
         if(!$id) {
-            die('ID não informado');
+            return new Response(404);
         }
 
         $fiado = FiadoRepository::getById($id);
+        if(!$fiado) {
+            return new Response(404);
+        }
 
-        require_once __DIR__.'/../view/fiado/formulario.php';
+        $dados['fiado'] = $fiado;
+        $html = $this->gerarHTML('fiado/formulario.php', $dados);
+        return new Response(200, [], $html);
     }
 
-    private function inserirFiado(): void {
+    protected function inserirFiado(): ResponseInterface {
         $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
         $fiado = new Fiado();
@@ -68,18 +66,18 @@ class FiadoController
 
         FiadoRepository::insert($fiado);
 
-        $this->go('/fiado/listar');
+        return new Response(302, ['Location' => '/fiado/listar']);
     }
 
-    private function atualizarFiado(): void {
+    protected function atualizarFiado(): ResponseInterface {
         $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
         if(!$id) {
-            die('ID não informado');
+            return new Response(404);
         }
 
         $fiado = FiadoRepository::getById($id);
         if(!$fiado) {
-            die("Registro $id não encontrado");
+            return new Response(404);
         }
 
         $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -89,17 +87,17 @@ class FiadoController
 
         FiadoRepository::update($fiado);
 
-        $this->go('/fiado/listar');
+        return new Response(302, ['Location' => '/fiado/listar']);
     }
 
-    private function excluirFiado(): void {
+    protected function excluirFiado(): ResponseInterface {
         $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
         if(!$id) {
-            die('ID não informado');
+            return new Response(404);
         }
 
         FiadoRepository::delete($id);
 
-        $this->go('/fiado/listar');
+        return new Response(302, ['Location' => '/fiado/listar']);
     }        
 }

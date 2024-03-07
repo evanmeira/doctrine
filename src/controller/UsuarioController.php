@@ -4,12 +4,11 @@ namespace Kuri\Doctrine\controller;
 
 use Kuri\Doctrine\persistencia\entity\Usuario;
 use Kuri\Doctrine\persistencia\repository\UsuarioRepository;
-use Kuri\Doctrine\utils\ControllerTrait;
+use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
-class UsuarioController
+class UsuarioController extends Controller
 {
-    use ControllerTrait;
-
     private const ROUTES = [
         '' => 'listar',
         'listar' => 'listar',
@@ -22,35 +21,37 @@ class UsuarioController
 
     public function __construct(string $path)
     {
-        if(key_exists($path, self::ROUTES)) {
-            $this->{self::ROUTES[$path]}();
-        } else {
-            $this->paginaNaoEncontrada();
-        }
+        parent::__construct($path);
+        $this->routes = self::ROUTES;
     }
 
-    public function listar(): void
+    protected function listar(): ResponseInterface
     {
-        $usuarioList = UsuarioRepository::getUsuarios();
-        require_once __DIR__.'/../view/usuario/lista.php';
+        $dados['usuarioList'] = UsuarioRepository::getUsuarios();
+        $html = $this->gerarHTML('usuario/lista.php', $dados);
+        return new Response(200, [], $html);
     }
 
-    public function novo(): void
+    protected function novo(): ResponseInterface
     {
-        require_once __DIR__.'/../view/usuario/formulario.php';
+        $html = $this->gerarHTML('usuario/formulario.php');
+        return new Response(200, [], $html);
     }
 
-    public function editar(): void
+    protected function editar(): ResponseInterface
     {
         $usuario = UsuarioRepository::getUsuario(filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT));
         if(!$usuario) {
-            die("Usuário #{$_GET['id']} não encontrado.");
+            http_response_code(400);
+            die("Usuário não encontrado.");
         }
         
-        require_once __DIR__.'/../view/usuario/formulario.php';
+        $dados['usuario'] = $usuario;
+        $html = $this->gerarHTML('usuario/formulario.php', $dados);
+        return new Response(200, [], $html);
     }
 
-    public function inserir(): void
+    protected function inserir(): ResponseInterface
     {
         $usuario = new Usuario(
             null,
@@ -60,10 +61,10 @@ class UsuarioController
 
         UsuarioRepository::insert($usuario);
 
-        $this->go('/usuario/listar');
+        return new Response(302, ['Location' => '/usuario/listar']);
     }
 
-    public function atualizar(): void
+    protected function atualizar(): ResponseInterface
     {
         $usuario = new Usuario(
             filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT),
@@ -73,13 +74,13 @@ class UsuarioController
 
         UsuarioRepository::atualizar($usuario);
 
-        $this->go('/usuario/listar');
+        return new Response(302, ['Location' => '/usuario/listar']);
     }
 
-    public function excluir(): void
+    protected function excluir(): ResponseInterface
     {
         UsuarioRepository::excluir(filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT));
 
-        $this->go('/usuario/listar');
+        return new Response(302, ['Location' => '/usuario/listar']);
     }
 }
