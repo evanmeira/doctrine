@@ -14,24 +14,29 @@ class Router
     use ControllerTrait;
 
     private const CONTROLLERS = [
-        '' => FiadoController::class,
         'fiado' => FiadoController::class,
         'usuario' => UsuarioController::class,
         'login' => LoginController::class
     ];
 
+    private static $routerAtual;
+
+    private $path = [];
+
     public function __construct()
     {        
-        $pathArray = explode('/', @$_SERVER['PATH_INFO']);
-        if(!key_exists(@$pathArray[1], self::CONTROLLERS)) {
+        $this->setPath();
+        self::$routerAtual = $this;
+        
+        if(!key_exists($this->path['controller'], self::CONTROLLERS)) {
             $this->paginaNaoEncontrada();
         }
         
-        if(!isset($_SESSION['user']) && @$pathArray[1] != 'login') {
+        if(!isset($_SESSION['user']) && $this->path['controller'] != 'login') {
             $this->go('/login');
 
-        } else if(isset($_SESSION['user']) && @$pathArray[1] === 'login'
-            && @$pathArray[2] != 'logoff') {
+        } else if(isset($_SESSION['user']) && $this->path['controller'] === 'login'
+            && $this->path['action'] != 'logoff') {
             $this->go('/');
         }
         
@@ -45,7 +50,9 @@ class Router
 
         $request = $creator->fromGlobals();
 
-        $controller = new (self::CONTROLLERS[@$pathArray[1]])(@$pathArray[2] ?? '');
+        //$controller = new (self::CONTROLLERS[$this->path['controller']])($this);
+        //$controller = Container::getDIContainer()->get('Kuri\Doctrine\controller\\'.ucfirst($this->path['controller']).'Controller');
+        $controller = Container::getDIContainer()->get(self::CONTROLLERS[$this->path['controller']]);
 
         $response = $controller->handle($request);
 
@@ -60,5 +67,22 @@ class Router
         }
         
         echo $response->getBody();
+    }
+
+    private function setPath(): void
+    {
+        $pathArray = explode('/', @$_SERVER['PATH_INFO']);
+        $this->path['controller'] = $pathArray[1] ?? 'fiado';
+        $this->path['action'] = $pathArray[2] ?? '';
+    }
+
+    public function getPath(): array
+    {
+        return $this->path;
+    }
+
+    public static function getRouterAtual(): Router
+    {
+        return self::$routerAtual;
     }
 }

@@ -3,6 +3,7 @@
 namespace Kuri\Doctrine\controller;
 
 use Kuri\Doctrine\persistencia\repository\UsuarioRepository;
+use Kuri\Doctrine\Router;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 
@@ -14,10 +15,10 @@ class LoginController extends Controller
         'logoff' => 'logoff'
     ];
 
-    public function __construct(string $path)
+    public function __construct(Router $router)
     {
-        parent::__construct($path);
         $this->routes = self::ROUTES;
+        parent::__construct($router);        
     }
 
     protected function login(): ResponseInterface

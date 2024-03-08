@@ -43,6 +43,7 @@ class UsuarioRepository
         $em = EntityManagerFactory::getEntityManager();
         $usuario = $em->getRepository(Usuario::class)->find($nUsuario->getId());
         $usuario->setUser($nUsuario->getUser());
+        $usuario->setPassword($nUsuario->getPassword());
         $em->flush();
     }
 

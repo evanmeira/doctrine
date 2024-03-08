@@ -9,7 +9,3 @@ use Kuri\Doctrine\Router;
 session_start();
 
 new Router();
-
-
-
-

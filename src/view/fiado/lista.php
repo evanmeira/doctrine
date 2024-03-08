@@ -36,6 +36,9 @@
             </tr>
         </tfoot>
     </table>
+    <br>
+    <a href="/fiado/gerar-json" target="_blank">Gerar JSON</a> | <a href="/fiado/gerar-xml" target="_blank">Gerar XML</a>
+
     <?php } else { ?>
     <p><strong><i>Não há fiados cadastrados.</i></strong></p>
     <?php } ?>

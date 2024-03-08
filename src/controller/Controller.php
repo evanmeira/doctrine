@@ -2,25 +2,26 @@
 
 namespace Kuri\Doctrine\controller;
 
+use Kuri\Doctrine\Router;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 abstract class Controller
 {
-    protected string $path;
+    protected string $action;
 
     protected array $routes;
 
-    public function __construct(string $path)
+    public function __construct(Router $router)
     {
-        $this->path = $path;
+        $this->action = $router->getPath()['action'];
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if(array_key_exists($this->path, $this->routes)) {
-            return $this->{$this->routes[$this->path]}();
+        if(array_key_exists($this->action, $this->routes)) {
+            return $this->{$this->routes[$this->action]}();
         } else {
             return $this->paginaNaoEncontrada();
         }

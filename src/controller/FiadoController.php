@@ -4,8 +4,10 @@ namespace Kuri\Doctrine\controller;
 
 use Kuri\Doctrine\persistencia\entity\Fiado;
 use Kuri\Doctrine\persistencia\repository\FiadoRepository;
+use Kuri\Doctrine\Router;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
+use SimpleXMLElement;
 
 class FiadoController extends Controller
 {
@@ -17,12 +19,14 @@ class FiadoController extends Controller
         'inserir' => 'inserirFiado',
         'atualizar' => 'atualizarFiado',
         'excluir' => 'excluirFiado',
+        'gerar-json' => 'getJson',
+        'gerar-xml' => 'getXml'
     ];
 
-    public function __construct(string $path)
+    public function __construct(Router $router)
     {
-        parent::__construct($path);
         $this->routes = self::ROUTES;
+        parent::__construct($router);        
     }
     
     protected function home(): ResponseInterface {
@@ -99,5 +103,25 @@ class FiadoController extends Controller
         FiadoRepository::delete($id);
 
         return new Response(302, ['Location' => '/fiado/listar']);
-    }        
+    }   
+    
+    protected function getJson(): ResponseInterface {
+        $fiados = FiadoRepository::getFiados();        
+        return new Response(200, ['Content-Type' => 'application/json'], json_encode($fiados));
+    }
+
+    protected function getXml(): ResponseInterface {
+        $fiados = FiadoRepository::getFiados();
+        $fiadosXml = new SimpleXMLElement('<fiados/>');
+        //$fiadosXml = new SimpleXMLElement('<fiados></fiados>');
+
+        foreach($fiados as $f) {
+            $fXml = $fiadosXml->addChild('fiado');
+            $fXml->addChild('id', $f->getId());
+            $fXml->addChild('nomeCliente', $f->getNomeCliente());
+            $fXml->addChild('valor', $f->getValor());
+        }
+
+        return new Response(200, ['Content-Type' => 'application/xml'], $fiadosXml->asXML());
+    }
 }
